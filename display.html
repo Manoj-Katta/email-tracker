@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Tracking Data</title>
+</head>
+<body>
+    <h1>Email Tracking Information</h1>
+    
+    <!-- Input to enter the emailId you want to track -->
+    <label for="emailIdInput">Enter Email ID:</label>
+    <input type="text" id="emailIdInput" placeholder="Enter email ID" />
+    <button id="fetchDataButton">Fetch Tracking Data</button>
+
+    <div id="trackingData">
+        <!-- The data will be displayed here -->
+    </div>
+
+    <script>
+        // Function to fetch the tracking data from the backend
+        async function fetchTrackingData(emailId) {
+            try {
+                const response = await fetch(`http://localhost:5000/tracking-data?emailId=${emailId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayTrackingData(data);
+                } else {
+                    alert('No data found for this email ID.');
+                }
+            } catch (error) {
+                console.error('Error fetching tracking data:', error);
+            }
+        }
+
+        // Function to display tracking data in a user-friendly format
+        function displayTrackingData(data) {
+            const trackingDataDiv = document.getElementById('trackingData');
+            trackingDataDiv.innerHTML = ''; // Clear previous data
+
+            if (!data || !data.openEvents || data.openEvents.length === 0) {
+                trackingDataDiv.innerHTML = '<p>No open events recorded for this email.</p>';
+                return;
+            }
+
+            // Display the email ID and open events
+            let htmlContent = `<h2>Tracking Data for Email: ${data.emailId}</h2>`;
+            htmlContent += '<h3>Open Events:</h3>';
+            htmlContent += '<table border="1"><tr><th>Timestamp</th><th>IP Address</th></tr>';
+
+            data.openEvents.forEach(event => {
+                htmlContent += `<tr><td>${new Date(event.timestamp).toLocaleString()}</td><td>${event.ipAddress}</td></tr>`;
+            });
+
+            htmlContent += '</table>';
+            trackingDataDiv.innerHTML = htmlContent;
+        }
+
+        // Event listener for the "Fetch Tracking Data" button
+        document.getElementById('fetchDataButton').addEventListener('click', function() {
+            const emailId = document.getElementById('emailIdInput').value;
+            if (emailId) {
+                fetchTrackingData(emailId);
+            } else {
+                alert('Please enter an email ID.');
+            }
+        });
+    </script>
+</body>
+</html>

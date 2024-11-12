@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracked Email</title>
+</head>
+<body>
+    <h1>Hello, this is a tracked email.</h1>
+    <p>Click <a href="http://localhost:5000/track/open?emailId=manojkatta1173@gmail.com">here</a> to view the content.</p>
+
+    <script>
+        // Function to initialize tracking data for an email before sending the link
+        async function trackEmail(emailId) {
+            try {
+                await fetch('http://localhost:5000/add-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ emailId }),
+                });
+                console.log(`Initialized tracking for ${emailId}`);
+            } catch (error) {
+                console.error('Error initializing tracking:', error);
+            }
+        }
+
+        // Example email ID
+        const emailId = 'manojkatta1173@gmail.com';
+        trackEmail(emailId); // Track email before sending
+    </script>
+</body>
+</html>
