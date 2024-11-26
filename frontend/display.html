@@ -19,19 +19,21 @@
 
     <script>
         // Function to fetch the tracking data from the backend
-        async function fetchTrackingData(emailId) {
-            try {
-                const response = await fetch(`https://email-tracker-eosin.vercel.app/tracking-data?emailId=${emailId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    displayTrackingData(data);
-                } else {
-                    alert('No data found for this email ID.');
-                }
-            } catch (error) {
-                console.error('Error fetching tracking data:', error);
-            }
+        const API_BASE_URL = process.env._BACKEND_URL;
+
+async function fetchTrackingData(emailId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/tracking-data?emailId=${emailId}`);
+        if (response.ok) {
+            const data = await response.json();
+            displayTrackingData(data);
+        } else {
+            alert('No data found for this email ID.');
         }
+    } catch (error) {
+        console.error('Error fetching tracking data:', error);
+    }
+}
 
         // Function to display tracking data in a user-friendly format
         function displayTrackingData(data) {
