@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Tracking Data</title>
+    <script src="env.js"></script> <!-- Include the environment variables -->
 </head>
 <body>
     <h1>Email Tracking Information</h1>
-    
+
     <!-- Input to enter the emailId you want to track -->
     <label for="emailIdInput">Enter Email ID:</label>
     <input type="text" id="emailIdInput" placeholder="Enter email ID" />
@@ -19,21 +20,19 @@
 
     <script>
         // Function to fetch the tracking data from the backend
-        const API_BASE_URL = process.env._BACKEND_URL;
-
-async function fetchTrackingData(emailId) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/tracking-data?emailId=${emailId}`);
-        if (response.ok) {
-            const data = await response.json();
-            displayTrackingData(data);
-        } else {
-            alert('No data found for this email ID.');
+        async function fetchTrackingData(emailId) {
+            try {
+                const response = await fetch(`${ENV.BACKEND_URL}/tracking-data?emailId=${emailId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayTrackingData(data);
+                } else {
+                    alert('No data found for this email ID.');
+                }
+            } catch (error) {
+                console.error('Error fetching tracking data:', error);
+            }
         }
-    } catch (error) {
-        console.error('Error fetching tracking data:', error);
-    }
-}
 
         // Function to display tracking data in a user-friendly format
         function displayTrackingData(data) {
