@@ -42,31 +42,29 @@ app.post('/add-email', async (req, res) => {
 // Route to track email open events
 app.get('/track/open', async (req, res) => {
   const { emailId } = req.query;
-  const ipAddress = req.ip; // Capture the IP address of the user
+  const ipAddress = req.headers['x-forwarded-for'] || req.ip; // Capture IP address
 
   try {
-    // Find the email tracking entry in the database
-    const trackingEntry = await Tracking.findOne({ emailId });
+    // Find or create the tracking entry for the email ID
+    let trackingEntry = await Tracking.findOne({ emailId });
 
     if (!trackingEntry) {
-      console.log(`Email not found in database: ${emailId}`);
-      return res.status(404).send('Email not found');
+      console.log(`Email not found, initializing tracking: ${emailId}`);
+      trackingEntry = new Tracking({ emailId });
     }
 
-    // Push the new open event with the timestamp and IP address
+    // Push the open event
     trackingEntry.openEvents.push({
       timestamp: new Date(),
       ipAddress,
     });
 
-    // Save the updated tracking entry
+    // Save to MongoDB
     await trackingEntry.save();
 
     console.log(`Email opened: ${emailId}`);
-
-    // Respond with a 1x1 transparent image (tracking pixel)
     res.setHeader('Content-Type', 'image/png');
-    res.send(Buffer.from([0, 0, 0, 0])); // 1x1 transparent image
+    res.send(Buffer.from([0, 0, 0, 0])); // Send tracking pixel
   } catch (error) {
     console.error('Error tracking email open:', error);
     res.status(500).send('Internal server error');
