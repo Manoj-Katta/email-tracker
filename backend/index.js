@@ -1,7 +1,6 @@
-// server.js
 const express = require('express');
 const mongoose = require('mongoose');
-const Tracking = require('./models/Tracking'); // Import the tracking model
+const Tracking = require('./models/Tracking'); // Import the Tracking model
 const cors = require('cors');
 require('dotenv').config();
 
@@ -16,82 +15,44 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log(err));
 
-// Route to add email tracking information
-app.post('/add-email', async (req, res) => {
-  const { emailId, userId } = req.body;
-
-  try {
-    // Create a new tracking entry if it doesn't exist
-    let trackingEntry = await Tracking.findOne({ emailId });
-
-    if (!trackingEntry) {
-      trackingEntry = new Tracking({
-        emailId,
-      });
-      await trackingEntry.save();
-      console.log('Email tracking initialized');
-    }
-
-    res.status(200).send('Email tracking initialized');
-  } catch (error) {
-    console.error('Error adding email to database:', error);
-    res.status(500).send('Internal server error');
-  }
-});
-
-// Route to track email open events
 // Route to track email open events
 app.get('/track/open', async (req, res) => {
   const { emailId } = req.query;
-  const ipAddress = req.headers['x-forwarded-for'] || req.ip; // Capture IP address
+  const ipAddress = req.headers['x-forwarded-for'] || req.ip; // Capture the IP address
 
   try {
-    // Find the tracking entry for the email ID
-    let trackingEntry = await Tracking.findOne({ emailId });
+    // Find or create the tracking entry
+    let trackingEntry = await Tracking.findOneAndUpdate(
+      { emailId }, // Query by emailId
+      {
+        $setOnInsert: { emailId }, // Create a new document if none exists
+      },
+      { upsert: true, new: true } // Perform upsert and return the updated document
+    );
 
-    if (!trackingEntry) {
-      console.log(`Email not found, initializing tracking: ${emailId}`);
-      // Create a new tracking entry
-      trackingEntry = new Tracking({
-        emailId,
-        openEvents: [
-          {
-            timestamp: new Date(),
-            ipAddress,
-          },
-        ],
-      });
+    // Push a new open event
+    trackingEntry.openEvents.push({
+      timestamp: new Date(),
+      ipAddress,
+    });
 
-      // Save the new tracking entry to the database
-      await trackingEntry.save();
+    // Save the updated document
+    await trackingEntry.save();
 
-      console.log(`New tracking entry created for emailId: ${emailId}`);
-    } else {
-      // If emailId exists, add the open event
-      trackingEntry.openEvents.push({
-        timestamp: new Date(),
-        ipAddress,
-      });
-
-      // Save the updated tracking entry
-      await trackingEntry.save();
-      console.log(`Email opened: ${emailId}`);
-    }
-
-    // Send the tracking entry as the response
-    res.status(200).json(trackingEntry);
+    console.log(`Email opened: ${emailId}`);
+    res.setHeader('Content-Type', 'image/png');
+    res.send(Buffer.from([0, 0, 0, 0])); // Send a 1x1 transparent pixel
   } catch (error) {
     console.error('Error tracking email open:', error);
     res.status(500).send('Internal server error');
   }
 });
 
-// Route to retrieve tracking data for an email
+// Route to retrieve tracking data
 app.get('/tracking-data', async (req, res) => {
   const { emailId } = req.query;
 
   try {
-    // Find the email tracking entry and populate the open events and click events
     const trackingData = await Tracking.findOne({ emailId });
 
     if (!trackingData) {
