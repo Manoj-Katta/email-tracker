@@ -21,30 +21,16 @@ app.get('/track/open', async (req, res) => {
   const ipAddress = req.headers['x-forwarded-for'] || req.ip; // Capture the IP address
 
   try {
-    // Check if the tracking entry exists
-    let trackingEntry = await Tracking.findOne({ emailId });
-
-    if (!trackingEntry) {
-      // Create a new document if it doesn't exist
-      trackingEntry = new Tracking({
-        emailId,
-        openEvents: [
-          {
-            timestamp: new Date(),
-            ipAddress,
-          },
-        ],
-      });
-    } else {
-      // Push a new open event to the existing document
-      trackingEntry.openEvents.push({
-        timestamp: new Date(),
-        ipAddress,
-      });
-    }
-
-    // Save the updated or new document
-    await trackingEntry.save();
+    // Update or insert a new tracking entry atomically
+    await Tracking.findOneAndUpdate(
+      { emailId }, // Find by emailId
+      {
+        $push: {
+          openEvents: { timestamp: new Date(), ipAddress },
+        },
+      },
+      { upsert: true, new: true } // Create a new entry if it doesn't exist
+    );
 
     console.log(`Email opened: ${emailId}, IP: ${ipAddress}`);
     res.setHeader('Content-Type', 'image/png');
@@ -54,6 +40,7 @@ app.get('/track/open', async (req, res) => {
     res.status(500).send('Internal server error');
   }
 });
+
 
 
 // Route to retrieve tracking data
