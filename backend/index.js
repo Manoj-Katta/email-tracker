@@ -21,25 +21,32 @@ app.get('/track/open', async (req, res) => {
   const ipAddress = req.headers['x-forwarded-for'] || req.ip; // Capture the IP address
 
   try {
-    // Find or create the tracking entry
-    let trackingEntry = await Tracking.findOneAndUpdate(
-      { emailId }, // Query by emailId
-      {
-        $setOnInsert: { emailId }, // Create a new document if none exists
-      },
-      { upsert: true, new: true } // Perform upsert and return the updated document
-    );
+    // Check if the tracking entry exists
+    let trackingEntry = await Tracking.findOne({ emailId });
 
-    // Push a new open event
-    trackingEntry.openEvents.push({
-      timestamp: new Date(),
-      ipAddress,
-    });
+    if (!trackingEntry) {
+      // Create a new document if it doesn't exist
+      trackingEntry = new Tracking({
+        emailId,
+        openEvents: [
+          {
+            timestamp: new Date(),
+            ipAddress,
+          },
+        ],
+      });
+    } else {
+      // Push a new open event to the existing document
+      trackingEntry.openEvents.push({
+        timestamp: new Date(),
+        ipAddress,
+      });
+    }
 
-    // Save the updated document
+    // Save the updated or new document
     await trackingEntry.save();
 
-    console.log(`Email opened: ${emailId}`);
+    console.log(`Email opened: ${emailId}, IP: ${ipAddress}`);
     res.setHeader('Content-Type', 'image/png');
     res.send(Buffer.from([0, 0, 0, 0])); // Send a 1x1 transparent pixel
   } catch (error) {
@@ -47,6 +54,7 @@ app.get('/track/open', async (req, res) => {
     res.status(500).send('Internal server error');
   }
 });
+
 
 // Route to retrieve tracking data
 app.get('/tracking-data', async (req, res) => {

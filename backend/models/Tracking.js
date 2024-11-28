@@ -9,12 +9,12 @@ const trackingSchema = new mongoose.Schema({
       ipAddress: { type: String },
     },
   ],
-  clickEvents: [
-    {
-      timestamp: { type: Date, default: Date.now },
-      ipAddress: { type: String },
-    },
-  ],
+  // clickEvents: [
+  //   {
+  //     timestamp: { type: Date, default: Date.now },
+  //     ipAddress: { type: String },
+  //   },
+  // ],
 });
 
 module.exports = mongoose.model('Tracking', trackingSchema);
